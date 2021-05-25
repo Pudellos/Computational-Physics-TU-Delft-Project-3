@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from numpy.ma.core import outer
 
 def outer_product(x, y):
     return np.matmul(x, np.transpose(y))
@@ -42,13 +41,20 @@ k = [k_p, k_m, k_z]
 rho = np.ndarray(shape = (timesteps, 2, 2), dtype = np.complex)
 rho[0] = rho_0
 
-
+P = np.zeros(timesteps)
+P[0] = np.trace(np.matmul(outer_product(up,up), rho[0]))
 for t in range(1, timesteps):
-    
+
     A = np.matrix([[0, 0], [0, 0]], dtype = np.complex)
 
     for i in range(len(L)):
         A += k[i] * (np.matmul(np.matmul(L[i], rho[t-1]), L[i].getH()) - (1/2) * anti_commutator(np.matmul(L[i].getH(), L[i]), rho[t-1]))
     
-    rho[t] = (-1j * commutator(H, rho[t-1]) + A) * dt
-    
+    rho[t] = rho[t-1] + (-1j * commutator(H, rho[t-1]) + A) * dt
+
+    print(rho[t-1])  
+    print(round(np.trace(rho[t-1]),2))
+    P[t] = np.trace(np.matmul(outer_product(up,up), rho[t-1]))
+
+plt.plot(np.arange(0,timesteps), P)
+plt.show()
