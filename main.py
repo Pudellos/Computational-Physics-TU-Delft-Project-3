@@ -1,1 +1,54 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from numpy.ma.core import outer
 
+def outer_product(x, y):
+    return np.matmul(x, np.transpose(y))
+
+def commutator(x, y):
+    return np.matmul(x,y) - np.matmul(y,x)
+
+def anti_commutator(x, y):
+    return np.matmul(x,y) + np.matmul(y,x)
+
+## Basis states ##
+down = np.matrix([[1],
+                  [0]])
+up = np.matrix([[0],
+                [1]])
+
+## Jump operators ##
+sigma_x = np.matrix([[0, 1],
+                     [1, 0]])
+sigma_z = np.matrix([[1, 0],
+                     [0,-1]])
+sigma_p = np.matrix([[0, 0],
+                     [1, 0]])
+sigma_m = np.matrix([[0, 1],
+                     [0, 0]])
+
+## Hamiltonian (spin-1/2 system, in B-field)##
+omega_0 = 1
+H = -(1/2)* omega_0 * sigma_z # -> hbar = 1
+
+
+timesteps = 1000
+dt = 0.01
+rho_0 = outer_product(up, up)
+k_p, k_m, k_z = 1, 1, 1
+L = [sigma_p, sigma_m, sigma_z]
+k = [k_p, k_m, k_z] 
+
+rho = np.ndarray(shape = (timesteps, 2, 2), dtype = np.complex)
+rho[0] = rho_0
+
+
+for t in range(1, timesteps):
+    
+    A = np.matrix([[0, 0], [0, 0]], dtype = np.complex)
+
+    for i in range(len(L)):
+        A += k[i] * (np.matmul(np.matmul(L[i], rho[t-1]), L[i].getH()) - (1/2) * anti_commutator(np.matmul(L[i].getH(), L[i]), rho[t-1]))
+    
+    rho[t] = (-1j * commutator(H, rho[t-1]) + A) * dt
+    
