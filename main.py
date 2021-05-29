@@ -60,6 +60,7 @@ rho[0] = rho_0
 
 
 P = np.zeros(timesteps)
+Fidel = np.zeros(timesteps)
 P[0] = np.trace(np.matmul(outer_product(up,up), rho[0]))
 for t in range(1, timesteps):
 
@@ -73,6 +74,11 @@ for t in range(1, timesteps):
     print(rho[t-1])  
     print(round(np.trace(rho[t-1]),2))
     P[t] = np.trace(np.matmul(outer_product(up,up), rho[t-1]))
+    Fidel[t]=(np.trace(np.power(np.power(rho[t], 1/2)*rho_0*np.power(rho[t], 1/2), 1/2)))**2 #Calculation of the fidelity with respect to rho_0
+
 
 plt.plot(np.arange(0,timesteps), P)
+plt.show()
+
+plt.plot(np.arange(0,timesteps), Fidel)
 plt.show()
