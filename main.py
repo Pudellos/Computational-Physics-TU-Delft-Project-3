@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.odr import *
-from functions import outer_product, commutator, anti_commutator, solve_lindblad
+from functions import outer_product, commutator, anti_commutator, rotate, solve_lindblad
       
 ## Basis states ##
 down = np.matrix([[1],
@@ -67,7 +67,7 @@ def main():
     plt.xlabel(r'Time $t$')
     plt.legend()
     plt.show()
-    
+
     ##### FITTING THE DECAY TIMES EQUATIONS FROM LECTURE NOTES 'LECTURE 8' ################################# 
 
     """
@@ -95,5 +95,29 @@ def main():
     plt.show()
     """
 
+def test():   
+    timesteps = 1000
+    dt = 0.01
+    rho_0 = outer_product(up, up)
+    L = [sigma_p, sigma_m, sigma_z]
+    k_p, k_m, k_z = 0.1, 0.1, 0.1
+    k = [k_p, k_m, k_z] 
+
+
+    rho = solve_lindblad(H, rho_0, L, k, timesteps, dt)
+    rho_echo = solve_lindblad(H, rho_0, L, k, timesteps, dt, echo = True)
+    
+    S_x_measured = (1/2) * np.real(rho[:, 1, 0] + rho[:, 0, 1])
+    S_x_measured_echo = (1/2) * np.real(rho_echo[:, 1, 0] + rho_echo[:, 0, 1])
+ 
+    t = np.linspace(0, timesteps * dt, timesteps)
+    plt.plot(t, S_x_measured, label = r'$\frac{1}{2}(\rho_{01}+\rho_{10})$')
+    plt.plot(t, S_x_measured_echo, label = r'$\frac{1}{2}(\rho^e_{01}+\rho^e_{10})$')
+    plt.xlabel(r'Time $t$')
+    plt.legend()
+    plt.show()
+
+
 if __name__ == "__main__":
     main()
+    #test()
