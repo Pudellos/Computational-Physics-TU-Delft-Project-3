@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.odr import *
 from functions import outer_product, commutator, anti_commutator, rotate, solve_lindblad
+from scipy.optimize import curve_fit
+
       
 ## Basis states ##
 down = np.matrix([[1],
@@ -67,7 +69,28 @@ def main():
     plt.xlabel(r'Time $t$')
     plt.legend()
     plt.show()
-
+    
+    rho00f=expfit(t,rho00)
+    print('gamma =',rho00f[1])
+    rho11f=expfit(t,rho11)
+    
+    plt.plot(t, func(t, *rho00f), 'r-',
+             label='fit: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(rho00f))
+    plt.plot(t, rho00, label = r'$\rho_{00}$', markersize=2)
+    plt.xlabel(r'Time $t$')
+    plt.title(r'$\rho_{00}$ fitted to a curve of the form: $\rho_{00}$ = a*exp(-b*t) + c')
+    plt.legend()
+    plt.show()
+    
+    plt.plot(t, func(t, *rho11f), 'r-',
+             label='fit: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(rho11f))
+    plt.plot(t, rho11, label = r'$\rho_{11}$', markersize=2)
+    plt.xlabel(r'Time $t$')
+    plt.title(r'$\rho_{11}$ fitted to a curve of the form: $\rho_{11}$ = a*exp(-b*t) + c')
+    plt.legend()
+    plt.show()
+    
+    
     ##### FITTING THE DECAY TIMES EQUATIONS FROM LECTURE NOTES 'LECTURE 8' ################################# 
 
     """
