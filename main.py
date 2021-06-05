@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.odr import *
-from functions import outer_product, commutator, anti_commutator, rotate, solve_lindblad, expfit
+from functions import outer_product, commutator, anti_commutator, rotate, solve_lindblad, expfit, f
 from scipy.optimize import curve_fit
 
       
@@ -74,7 +74,7 @@ def main():
     print('gamma =',rho00f[1])
     rho11f=expfit(t,rho11)
     
-    plt.plot(t, func(t, *rho00f), 'r-',
+    plt.plot(t, f(t, *rho00f), 'r-',
              label='fit: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(rho00f))
     plt.plot(t, rho00, label = r'$\rho_{00}$', markersize=2)
     plt.xlabel(r'Time $t$')
@@ -82,7 +82,7 @@ def main():
     plt.legend()
     plt.show()
     
-    plt.plot(t, func(t, *rho11f), 'r-',
+    plt.plot(t, f(t, *rho11f), 'r-',
              label='fit: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(rho11f))
     plt.plot(t, rho11, label = r'$\rho_{11}$', markersize=2)
     plt.xlabel(r'Time $t$')

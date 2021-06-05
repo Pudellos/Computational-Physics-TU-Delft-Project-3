@@ -14,13 +14,14 @@ sigma_m = np.matrix([[0, 1],
 I = np.matrix([[1, 0],
                [0, 1]])
 
+def f(x, a, b, c):
+    return a * np.exp(-b * x) + c
+
 def expfit(xdata,ydata):
     '''
     This function fits xdata and ydata to an exponential curve of 
     the form ydata= a*exp(-b*xdata) + c and then returns a, b and c
     '''
-    def f(x, a, b, c):
-        return a * np.exp(-b * x) + c
     popt, pcov = curve_fit(f, xdata, ydata)
     return popt
 
