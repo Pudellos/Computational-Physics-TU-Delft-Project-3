@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.optimize import curve_fit
 
 ## Pauli/Jump operators ##
 sigma_x = np.matrix([[0, 1],
