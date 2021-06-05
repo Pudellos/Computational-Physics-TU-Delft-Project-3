@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.odr import *
-from functions import outer_product, commutator, anti_commutator, rotate, solve_lindblad
+from functions import outer_product, commutator, anti_commutator, rotate, solve_lindblad, expfit
 from scipy.optimize import curve_fit
 
       
