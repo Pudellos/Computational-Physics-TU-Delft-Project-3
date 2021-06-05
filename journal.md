@@ -3,3 +3,9 @@ We have implemented an algorithm to solve the Lindblad equation for a spin 1/2 s
 
 ![alt text](Figures/relaxation_plot.svg "Title Text")
 ![alt text](Figures/decoherence_plot.svg "Title Text")
+
+# Week 2
+This week we fitted the curves of the relaxation plot and show that the up->down process has the same rate as the down->up process namely $\gamma= 0.200$.
+
+![alt text](Figures/rho00fit.png "Title Text")
+![alt text](Figures/rho11fit.png "Title Text")
