@@ -1,15 +1,20 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.odr import *
-from functions import outer_product, commutator, anti_commutator, rotate, solve_lindblad, expfit, f
+from functions import outer_product, commutator, anti_commutator, rotate, solve_lindblad, expfit, f, solve_lindblad_entangled
 from scipy.optimize import curve_fit
 
-      
+
 ## Basis states ##
 down = np.matrix([[1],
                   [0]])
 up = np.matrix([[0],
                 [1]])
+
+entangled=np.kron(up,down) #state A and state B, respectively
+
+I=np.matrix([[1, 0],
+            [0, 1]])
 
 plus  = (1 / np.sqrt(2)) * (up + down)
 minus = (1 / np.sqrt(2)) * (up - down)
@@ -35,6 +40,24 @@ S_x, S_y, S_z = 1/2 * sigma_x, 1/2 * sigma_y, 1/2 * sigma_z ## Angular mmtm oper
 gamma = 1       # gyromagnetic ratio - needs proper value
 B = [1 ,1, 1]   # Magnetic field
 H_B = -gamma*(B[0]*S_x + B[1]*S_y + B[2]*S_z)
+
+################################################################# ENTANGLED STATES ######################################################################
+
+# PLEASE INTPUT HAMILTONIAN FOR ENTANGLED STATES HERE #############################################################################
+H_entan=np.kron(I,H)   # this is guess
+###################################################################################################################################
+
+# Operators for entangled states ##
+X_A=np.kron(sigma_x,I) # measuring z-component fo entangled state A
+X_B=np.kron(I,sigma_x) # measuring z-component fo entangled state B
+Y_A=np.kron(sigma_y,I) # measuring z-component fo entangled state A
+Y_B=np.kron(I,sigma_y) # measuring z-component fo entangled state B
+Z_A=np.kron(sigma_z,I) # measuring z-component fo entangled state A
+Z_B=np.kron(I,sigma_z) # measuring z-component fo entangled state B
+
+
+
+
 
 def main():
     
@@ -141,6 +164,48 @@ def test():
     plt.show()
 
 
+    
+    
+def main_entangled(state='A'):
+    
+    timesteps = 2500
+    dt = 0.01
+    rho_0_entan = outer_product(entangled, entangled)
+    L_A = [X_A, Y_A, Z_A]
+    L_B = [X_B, Y_B, Z_B]
+    k_p, k_m, k_z = 0.1, 0.1, 0.1
+    k = [k_p, k_m, k_z]
+    rho_A = solve_lindblad_entangled(H_entan, rho_0_entan, L_A, k, timesteps, dt)
+    rho_B = solve_lindblad_entangled(H_entan, rho_0_entan, L_B, k, timesteps, dt)
+
+    P = np.zeros(timesteps, dtype = np.complex)
+    P[0] = np.trace(outer_product(entangled,entangled) * rho_0_entan)
+    Fidel = np.zeros(timesteps, dtype = np.complex)
+
+    if state == 'A':
+        for t in range(1, timesteps):
+            P[t] = np.trace( outer_product(entangled, entangled) * rho_A[t-1] ) 
+            Fidel[t] = np.trace(np.power(np.power(rho_A[t], 1/2) * rho_0_entan * np.power(rho_A[t], 1/2), 1/2))**2 # Calculation of the fidelity with respect to rho_0
+    
+    if state == 'B':
+        for t in range(1, timesteps):
+            P[t] = np.trace( outer_product(entangled, entangled) * rho_B[t-1] ) 
+            Fidel[t] = np.trace(np.power(np.power(rho_B[t], 1/2) * rho_0_entan * np.power(rho_B[t], 1/2), 1/2))**2 # Calculation of the fidelity with respect to rho_0
+    return(rho_A, rho_B, P, Fidel)
+
+
 if __name__ == "__main__":
     main()
+    print('solved entangled rho_A')
+    b=main_entangled()[0]
+    print(b)
+    print('solved entangled rho_B')
+    b=main_entangled()[1]
+    print(b)
+    print('solved entangled P')
+    b=main_entangled()[2]
+    print(b)
+    print('solved entangled Fidel')
+    b=main_entangled()[3]
+    print(b)
     #test()

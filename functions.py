@@ -77,6 +77,37 @@ def solve_lindblad(H, rho0, L, gamma, timesteps, dt, echo = False):
         print("done3")
     return rho
 
+def solve_lindblad_entangled(H, rho0, L, gamma, timesteps, dt, echo = False):
+    N = rho0.shape[0]
+    rho = np.ndarray(shape = (timesteps, N, N), dtype = np.complex)
+    rho[0] = rho0
+
+    if(not echo):
+        for t in range(1, timesteps):
+            A = np.matrix([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], dtype = np.complex)
+            for i in range(len(L)):
+                
+                A += gamma[i] * (L[i] * rho[t-1] * L[i].H - (1/2) * anti_commutator(L[i].H * L[i] , rho[t-1]))
+            rho[t] = rho[t-1] + (-1j * commutator(H, rho[t-1]) + A) * dt
+    if(echo):
+        tau = np.floor(timesteps / 2)
+        rho[0] = rotate(rho[0], np.pi/2, [0, 1, 0])
+        print("done1")
+        for t in range(1, timesteps):
+            #print(t, timesteps)
+            if( t == tau ):
+                rho[t] = rotate(rho[0], np.pi, [0, 0, 1])
+                print("done2")
+            else:
+                A = np.matrix([[0, 0], [0, 0]], dtype = np.complex)
+                for i in range(len(L)):
+                    A += gamma[i] * (L[i] * rho[t-1] * L[i].H - (1/2) * anti_commutator(L[i].H * L[i] , rho[t-1]))
+                rho[t] = rho[t-1] + (-1j * commutator(H, rho[t-1]) + A) * dt 
+        rho[t] = rotate(rho[t], np.pi/2, [0, 1, 0])
+        print("done3")
+    return rho
+
+
 
 def main():
     down = np.matrix([[1],
