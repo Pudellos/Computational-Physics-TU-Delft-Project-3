@@ -13,3 +13,9 @@ This week we fitted the curves of the relaxation plot and show that the up->down
 We also implemented a spin echo experiment. The spin echo experiment is as follows: $`R_{\hat{x}}(\pi/2) \rightarrow R_{\hat{x}}(\pi) \rightarrow R_{\hat{x}}(\pi/2)`$. Between the pulses we wait a time $`\tau`$, here the system evolves according to the Lindblad equation. In the Figure below we have varied $`\tau`$ and plotted the fidelity of the state without the spin echo ($`F_A`$) and with the spin echo ($`F_B`$). As expected, the fidelity of the state with echo is consistently better than without, which is the goal of the spin echo.
 
 ![alt text](Figures/spin_echo.svg "Title Text")
+
+We also extended the code to solve a coupled two spin 1/2 system. We plotted the fidelity, purity and probability to have both spins in the up-state.
+
+![alt text](Figures/entangled_states.svg "Title Text")
+
+The code has also been restructured. We made a State class, which contains all the information of the state of our system and can be used to calculate internally any observable we give it. It can also calculate the probability to measure any state if you give it the corresponding measurement operator. In main we can now easily experiment with the Lindblad equation and look at different input parameters!
