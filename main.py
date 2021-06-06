@@ -1,107 +1,102 @@
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.odr import *
-from functions import outer_product, commutator, anti_commutator, rotate, solve_lindblad, expfit, f, solve_lindblad_entangled
+from functions import commutator, anti_commutator, rotate, solve_lindblad, fit
+from State import State
 from scipy.optimize import curve_fit
-
 
 ## Basis states ##
 down = np.matrix([[1],
-                  [0]])
+                  [0]], dtype = np.complex)
 up = np.matrix([[0],
-                [1]])
+                [1]], dtype = np.complex)
 
-entangled=np.kron(up,down) #state A and state B, respectively
-
-I=np.matrix([[1, 0],
-            [0, 1]])
+phi_plus = (1 / np.sqrt(2)) * (np.kron(up, up) + np.kron(down, down) ) #state A and state B, respectively
 
 plus  = (1 / np.sqrt(2)) * (up + down)
+
 minus = (1 / np.sqrt(2)) * (up - down)
 
 ## Pauli/Jump operators ##
-sigma_x = np.matrix([[0, 1],
+I = np.matrix([[1, 0],
+               [0, 1]]) 
+PauliX = np.matrix([[0, 1],
                      [1, 0]])
-sigma_y = np.matrix([[0 ,-1j],
+PauliY = np.matrix([[0 ,-1j],
                      [1j, 0]])
-sigma_z = np.matrix([[1, 0],
+PauliZ = np.matrix([[1, 0],
                      [0,-1]])
-sigma_p = np.matrix([[0, 0],
+PauliP = np.matrix([[0, 0],
                      [1, 0]])
-sigma_m = np.matrix([[0, 1],
+PauliM = np.matrix([[0, 1],
                      [0, 0]])
+S_x, S_y, S_z = 1/2 * PauliX, 1/2 * PauliY, 1/2 * PauliZ ## Angular mmtm operators
+
+## Operators 2 spins states ##
+XI = np.kron(PauliX,I) 
+IX = np.kron(I,PauliX) 
+YI = np.kron(PauliY,I) 
+IY = np.kron(I,PauliY) 
+MM = np.kron(PauliM, PauliM)
+PP = np.kron(PauliP, PauliP)
+MI = np.kron(PauliM, I)
+IM = np.kron(I, PauliM)
+PI = np.kron(PauliP, I)
+IP = np.kron(I, PauliP)
+ZI = np.kron(PauliZ, I)
+IZ = np.kron(I, PauliZ)
+ZZ = np.kron(PauliZ, PauliZ)
 
 ## Hamiltonian (spin-1/2 system, in B-field in z-direction) ##
 omega_0 = 5
-H = -(1/2)* omega_0 * sigma_z # -> hbar = 1
+H = -(1/2)* omega_0 * PauliZ # -> hbar = 1
 
 # Hamiltonian (spin-1/2 system, general B-field) ##
-S_x, S_y, S_z = 1/2 * sigma_x, 1/2 * sigma_y, 1/2 * sigma_z ## Angular mmtm operators 
 gamma = 1       # gyromagnetic ratio - needs proper value
 B = [1 ,1, 1]   # Magnetic field
 H_B = -gamma*(B[0]*S_x + B[1]*S_y + B[2]*S_z)
 
-################################################################# ENTANGLED STATES ######################################################################
-
-# PLEASE INTPUT HAMILTONIAN FOR ENTANGLED STATES HERE #############################################################################
-H_entan=np.kron(I,H)   # this is guess
-###################################################################################################################################
-
-# Operators for entangled states ##
-X_A=np.kron(sigma_x,I) # measuring z-component fo entangled state A
-X_B=np.kron(I,sigma_x) # measuring z-component fo entangled state B
-Y_A=np.kron(sigma_y,I) # measuring z-component fo entangled state A
-Y_B=np.kron(I,sigma_y) # measuring z-component fo entangled state B
-Z_A=np.kron(sigma_z,I) # measuring z-component fo entangled state A
-Z_B=np.kron(I,sigma_z) # measuring z-component fo entangled state B
-
-
-
-
+# Hamiltonian (2 coupled 1/2 spins )
+J = 10
+w1, w2 = 5, 5
+H_entan = -w1 * np.kron(S_z, I) - w2 * np.kron(I, S_z) + J * np.kron(S_z, S_z) 
 
 def main():
-    
     timesteps = 2500
     dt = 0.01
-    rho_0 = outer_product(up, up)
-    L = [sigma_p, sigma_m, sigma_z]
+    state = State(up, timesteps)
+    L = [PauliP, PauliM, PauliZ]
     k_p, k_m, k_z = 0.1, 0.1, 0.1
     k = [k_p, k_m, k_z] 
 
-    rho = solve_lindblad(H, rho_0, L, k, timesteps, dt)
+    state.dm = solve_lindblad(H, state.dm[0], L, k, timesteps, dt)
 
-    P = np.zeros(timesteps, dtype = np.complex)
-    P[0] = np.trace(outer_product(up,up) * rho_0)
-    Fidel = np.zeros(timesteps, dtype = np.complex)
+    S_x_measured = state.calc_observable(S_x)
+    P_up = state.P(up)
+    fidelity = state.fidelity(state.dm[0])
 
-    for t in range(1, timesteps):
-        P[t] = np.trace( outer_product(up, up) * rho[t-1] ) 
-        Fidel[t] = np.trace(np.power(np.power(rho[t], 1/2) * rho_0 * np.power(rho[t], 1/2), 1/2))**2 # Calculation of the fidelity with respect to rho_0
-
-    rho00 = np.real(rho[:, 0, 0])
-    rho11 = np.real(rho[:, 1, 1])
-    rho01 = np.real(rho[:, 0, 1])
-    rho10 = np.real(rho[:, 1, 0])
-    
-    S_x_measured = (1/2) * np.real(rho[:, 1, 0] + rho[:, 0, 1])
     t = np.linspace(0, timesteps * dt, timesteps)
-
-    plt.plot(t, rho00, label = r'$\rho_{00}$', markersize=2)
-    plt.plot(t, rho11, label = r'$\rho_{11}$', markersize=2)
     plt.plot(t, S_x_measured, label = r'$\frac{1}{2}(\rho_{01}+\rho_{10})$')
+    plt.plot(t, P_up, label = r'$P_{\uparrow}$')
+    plt.plot(t, fidelity, label = r'Fidelity')
     plt.xlabel(r'Time $t$')
     plt.legend()
     plt.show()
-    
-    rho00f=expfit(t,rho00)
+
+    rho00 = np.real(state.dm[:, 0, 0])
+    rho11 = np.real(state.dm[:, 1, 1])
+
+    f = lambda x, a, b, c: a * np.exp(-b * x) + c
+    rho00f = fit(t, rho00, f)
     print('gamma =',rho00f[1])
-    rho11f=expfit(t,rho11)
+    rho11f = fit(t, rho11, f)
     
     plt.plot(t, f(t, *rho00f), 'r-',
              label='fit: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(rho00f))
     plt.plot(t, rho00, label = r'$\rho_{00}$', markersize=2)
     plt.xlabel(r'Time $t$')
-    plt.title(r'$\rho_{00}$ fitted to a curve of the form: $\rho_{00}$ = a*exp(-b*t) + c')
+    plt.title(r'$\rho_{00}$ fitted to a curve of the form: $\rho_{00}$ = ae^{-bt} + c')
     plt.legend()
     plt.show()
     
@@ -109,46 +104,17 @@ def main():
              label='fit: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(rho11f))
     plt.plot(t, rho11, label = r'$\rho_{11}$', markersize=2)
     plt.xlabel(r'Time $t$')
-    plt.title(r'$\rho_{11}$ fitted to a curve of the form: $\rho_{11}$ = a*exp(-b*t) + c')
+    plt.title(r'$\rho_{11}$ fitted to a curve of the form: $\rho_{11}$ = ae^{-bt} + c')
     plt.legend()
     plt.show()
-    
-    
-    ##### FITTING THE DECAY TIMES EQUATIONS FROM LECTURE NOTES 'LECTURE 8' ################################# 
-
-    """
-    def function(p, x):
-        gamma, c = p
-        return (c*(1-np.exp(-gamma*x)))
-
-    quad_model = Model(function)
-    x = np.arange(0,timesteps)
-    y = np.array(rho00)
-    x_err = np.full(len(x),np.finfo(np.float32).eps)
-    y_err = np.full(len(x),np.finfo(np.float32).eps)
-    data = RealData(x, y, sx=x_err, sy=y_err)
-    odr = ODR(data, quad_model, beta0=[0., 1.])
-    out = odr.run()
-    x_fit = np.linspace(x[0], x[-1], 1000)
-    y_fit = function(out.beta, x_fit)
-    plt.plot(x_fit, y_fit,color='blue',linewidth=2, label='data ODR fit')
-    plt.legend()
-    plt.show()
-    print('gamma=',out.beta[0])
-    ######################################################################################3
-
-    plt.plot(np.arange(0,timesteps), Fidel)
-    plt.show()
-    """
-
+  
 def test():   
     timesteps = 1000
     dt = 0.01
-    rho_0 = outer_product(up, up)
-    L = [sigma_p, sigma_m, sigma_z]
+    rho_0 = up * up.H
+    L = [PauliP, PauliM, PauliZ]
     k_p, k_m, k_z = 0.1, 0.1, 0.1
     k = [k_p, k_m, k_z] 
-
 
     rho = solve_lindblad(H, rho_0, L, k, timesteps, dt)
     rho_echo = solve_lindblad(H, rho_0, L, k, timesteps, dt, echo = True)
@@ -163,49 +129,35 @@ def test():
     plt.legend()
     plt.show()
 
-
-    
-    
-def main_entangled(state='A'):
-    
+def main_entangled():
     timesteps = 2500
     dt = 0.01
-    rho_0_entan = outer_product(entangled, entangled)
-    L_A = [X_A, Y_A, Z_A]
-    L_B = [X_B, Y_B, Z_B]
-    k_p, k_m, k_z = 0.1, 0.1, 0.1
-    k = [k_p, k_m, k_z]
-    rho_A = solve_lindblad_entangled(H_entan, rho_0_entan, L_A, k, timesteps, dt)
-    rho_B = solve_lindblad_entangled(H_entan, rho_0_entan, L_B, k, timesteps, dt)
+    state = State(phi_plus, timesteps)
 
-    P = np.zeros(timesteps, dtype = np.complex)
-    P[0] = np.trace(outer_product(entangled,entangled) * rho_0_entan)
-    Fidel = np.zeros(timesteps, dtype = np.complex)
+    L = [MM, PP, MI, IM, PI, IP, ZI, IZ, ZZ]
+    mm, pp, mi, im, pi, ip, zi, iz, zz = 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1
+    k = [mm, pp, mi, im, pi, ip, zi, iz, zz]
 
-    if state == 'A':
-        for t in range(1, timesteps):
-            P[t] = np.trace( outer_product(entangled, entangled) * rho_A[t-1] ) 
-            Fidel[t] = np.trace(np.power(np.power(rho_A[t], 1/2) * rho_0_entan * np.power(rho_A[t], 1/2), 1/2))**2 # Calculation of the fidelity with respect to rho_0
-    
-    if state == 'B':
-        for t in range(1, timesteps):
-            P[t] = np.trace( outer_product(entangled, entangled) * rho_B[t-1] ) 
-            Fidel[t] = np.trace(np.power(np.power(rho_B[t], 1/2) * rho_0_entan * np.power(rho_B[t], 1/2), 1/2))**2 # Calculation of the fidelity with respect to rho_0
-    return(rho_A, rho_B, P, Fidel)
+    state.dm = solve_lindblad(H_entan, state.dm[0], L, k, timesteps, dt)
 
+    P_up = state.P(np.kron(up * up.H, up * up.H))
+    fidelity = state.fidelity(state.dm[0])
+    S_x_measured = state.calc_observable(np.kron(S_x, S_x))
+    purity = state.purity()
+
+    t = np.linspace(0, timesteps * dt, timesteps)
+    plt.plot(t, P_up, label = r'$P_{up}$', markersize=2)
+    plt.plot(t, fidelity, label = r'$F$', markersize=2)
+    plt.plot(t, S_x_measured, label = r'$\langle S_{x1}(t) \rangle$', markersize=2)
+    plt.plot(t, purity, label = r'Tr$(\rho^2)$', markersize=2)
+    plt.xlabel(r'Time $t$')
+    plt.legend()
+    plt.show()
 
 if __name__ == "__main__":
-    main()
-    print('solved entangled rho_A')
-    b=main_entangled()[0]
-    print(b)
-    print('solved entangled rho_B')
-    b=main_entangled()[1]
-    print(b)
-    print('solved entangled P')
-    b=main_entangled()[2]
-    print(b)
-    print('solved entangled Fidel')
-    b=main_entangled()[3]
-    print(b)
-    #test()
+    if(sys.argv[1] == "spin_1/2"):
+        main()
+    if(sys.argv[1] == "spin_echo"):
+        test()
+    if(sys.argv[1] == "two_spins"):
+        main_entangled()
