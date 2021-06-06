@@ -131,7 +131,7 @@ def test():
         fidelityA[i] = stateA.fidelity(up * up.H)[-1]
         fidelityB[i] = stateB.fidelity(up * up.H)[-1]      
 
-    tau = t / 2
+    tau = dt * (t / 2)
     plt.plot(t, fidelityA, label = r'$F_A$', markersize=2, color = 'b')
     plt.plot(t, fidelityB, label = r'$F_B$', markersize=2, color = 'r')
     plt.xlabel(r'$\tau$')
@@ -159,7 +159,7 @@ def main_entangled():
     t = np.linspace(0, timesteps * dt, timesteps)
     plt.plot(t, P_up, label = r'$P_{up}$', markersize=2)
     plt.plot(t, fidelity, label = r'$F$', markersize=2)
-    plt.plot(t, S_x_measured, label = r'$\langle S_{x1}(t) \rangle$', markersize=2)
+    #plt.plot(t, S_x_measured, label = r'$\langle S_{x1}(t) \rangle$', markersize=2)
     plt.plot(t, purity, label = r'Tr$(\rho^2)$', markersize=2)
     plt.xlabel(r'Time $t$')
     plt.legend()
