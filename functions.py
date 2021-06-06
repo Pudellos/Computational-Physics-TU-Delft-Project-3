@@ -15,7 +15,6 @@ PauliP = np.matrix([[0, 0],
 PauliM = np.matrix([[0, 1],
                      [0, 0]])
 
-
 def fit(xdata, ydata, f):
     '''
     This function fits xdata and ydata to an arbitrary function f
@@ -41,7 +40,7 @@ def coherent_state(alpha, N):
         X[n] = np.exp(- np.abs(alpha)**2 / 2) * (alpha**n / np.math.factorial(n))
     return X
 
-def solve_lindblad(H, rho0, L, gamma, timesteps, dt, echo = False):
+def solve_lindblad(H, rho0, L, gamma, timesteps, dt, echo = False, tau = None):
     N = rho0.shape[0]
     rho = np.ndarray(shape = (timesteps, N, N), dtype = np.complex)
     rho[0] = rho0
@@ -54,37 +53,23 @@ def solve_lindblad(H, rho0, L, gamma, timesteps, dt, echo = False):
             rho[t] = rho[t-1] + (-1j * commutator(H, rho[t-1]) + A) * dt
 
     if(echo):
-        tau = np.floor(timesteps / 2)
-        rho[0] = rotate(rho[0], np.pi/2, [0, 1, 0])
-        print("done1")
+        tau = np.floor(timesteps/2) - 1
+        rho[0] = rotate(rho[0], np.pi/2, [1, 0, 0])
         for t in range(1, timesteps):
-            #print(t, timesteps)
             if( t == tau ):
-                rho[t] = rotate(rho[0], np.pi, [0, 0, 1])
-                print("done2")
+                rho[t] = rotate(rho[t-1], np.pi, [1, 0, 0])
+            elif( t == 2 * tau ): 
+                rho[t] = rotate(rho[t-1], np.pi/2, [1, 0, 0])
             else:
                 A = np.matrix([[0, 0], [0, 0]], dtype = np.complex)
                 for i in range(len(L)):
                     A += gamma[i] * (L[i] * rho[t-1] * L[i].H - (1/2) * anti_commutator(L[i].H * L[i] , rho[t-1]))
                 rho[t] = rho[t-1] + (-1j * commutator(H, rho[t-1]) + A) * dt 
-        rho[t] = rotate(rho[t], np.pi/2, [0, 1, 0])
-        print("done3")
     return rho
 
 def main():
-    down = np.matrix([[1],
-                  [0]])
-    up = np.matrix([[0],
-                    [1]])
-    
-    rho = up * up.H
-
-    rho = rotate(rho, np.pi/2, [0, 1, 0])
-    print(rho)
-
-    X = np.matrix([[1e-17, 0],
-                   [0, 0]], dtype=np.complex)
-
+    for i, N in enumerate(np.arange(100, 1000, 100)):
+        print(i, N)
 
 if __name__ == "__main__":
     main()

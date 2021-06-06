@@ -110,22 +110,33 @@ def main():
   
 def test():   
     timesteps = 1000
-    dt = 0.01
-    rho_0 = up * up.H
+    dt = 0.005
     L = [PauliP, PauliM, PauliZ]
-    k_p, k_m, k_z = 0.1, 0.1, 0.1
+    k_p, k_m, k_z = 0.1, 0.1, 0.01
     k = [k_p, k_m, k_z] 
 
-    rho = solve_lindblad(H, rho_0, L, k, timesteps, dt)
-    rho_echo = solve_lindblad(H, rho_0, L, k, timesteps, dt, echo = True)
-    
-    S_x_measured = (1/2) * np.real(rho[:, 1, 0] + rho[:, 0, 1])
-    S_x_measured_echo = (1/2) * np.real(rho_echo[:, 1, 0] + rho_echo[:, 0, 1])
- 
-    t = np.linspace(0, timesteps * dt, timesteps)
-    plt.plot(t, S_x_measured, label = r'$\frac{1}{2}(\rho_{01}+\rho_{10})$')
-    plt.plot(t, S_x_measured_echo, label = r'$\frac{1}{2}(\rho^e_{01}+\rho^e_{10})$')
-    plt.xlabel(r'Time $t$')
+    H = - 1 * S_z
+
+    t = np.arange(100, 2500, 40)
+    fidelityA = np.zeros(len(t))
+    fidelityB = np.zeros(len(t))
+
+    for i, N in enumerate(t):
+        print( N )
+        stateA = State(up, N)
+        stateA.dm = solve_lindblad(H, stateA.dm[0], L, k, N, dt)
+
+        stateB = State(up, N)
+        stateB.dm = solve_lindblad(H, stateB.dm[0], L, k, N, dt, echo = True)
+        fidelityA[i] = stateA.fidelity(up * up.H)[-1]
+        fidelityB[i] = stateB.fidelity(up * up.H)[-1]      
+
+    tau = t / 2
+    plt.plot(t, fidelityA, label = r'$F_A$', markersize=2, color = 'b')
+    plt.plot(t, fidelityB, label = r'$F_B$', markersize=2, color = 'r')
+    plt.xlabel(r'$\tau$')
+    plt.ylabel(r'Fidelity')
+    plt.ylim(0.5,1)
     plt.legend()
     plt.show()
 
