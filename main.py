@@ -1,6 +1,7 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+from numpy.lib.arraypad import _slice_at_axis
 from scipy.odr import *
 from functions import commutator, anti_commutator, rotate, solve_lindblad, fit
 from State import State
@@ -47,6 +48,11 @@ IP = np.kron(I, PauliP)
 ZI = np.kron(PauliZ, I)
 IZ = np.kron(I, PauliZ)
 ZZ = np.kron(PauliZ, PauliZ)
+
+## Axis
+x_axis = np.array([1, 0, 0])
+y_axis = np.array([0, 1, 0])
+z_axis = np.array([0, 0, 1])
 
 ## Hamiltonian (spin-1/2 system, in B-field in z-direction) ##
 omega_0 = 5
@@ -108,35 +114,48 @@ def main():
     plt.legend()
     plt.show()
   
-def test():   
+def echo():   
+    phi = 0.5
+    PauliPhi = np.matrix([[1, 0],
+                          [0, np.exp(-1j * phi)]], dtype = np.complex)
+
     timesteps = 1000
     dt = 0.005
     L = [PauliP, PauliM, PauliZ]
     k_p, k_m, k_z = 0.1, 0.1, 0.01
     k = [k_p, k_m, k_z] 
-
+    
     H = - 1 * S_z
 
-    t = np.arange(100, 2500, 40)
+    t = np.arange(100, 1000, 20)
     fidelityA = np.zeros(len(t))
     fidelityB = np.zeros(len(t))
+    PA = np.zeros(len(t))
+    PB = np.zeros(len(t))
 
+    L = [PauliM, PauliPhi]
+    k = [0.1, 0.01]
     for i, N in enumerate(t):
-        print( N )
+        print("N = %s" %N, end = '\r' )
+        tau = np.floor(N/2) - 1
+        seq = [[0    , [np.pi/2, x_axis]], # [time of pulse, pulse = [rotation angle, rotation axis]]
+               [tau  , [np.pi  , x_axis]],
+               [2*tau, [np.pi/2, x_axis]]]
+
         stateA = State(up, N)
         stateA.dm = solve_lindblad(H, stateA.dm[0], L, k, N, dt)
 
         stateB = State(up, N)
-        stateB.dm = solve_lindblad(H, stateB.dm[0], L, k, N, dt, echo = True)
-        fidelityA[i] = stateA.fidelity(up * up.H)[-1]
-        fidelityB[i] = stateB.fidelity(up * up.H)[-1]      
-
+        stateB.dm = solve_lindblad(H, stateB.dm[0], L, k, N, dt, pulse_sequence = seq)
+        PA[i] = stateA.P(up)[-1]
+        PB[i] = stateB.P(up)[-1]
+        
     tau = dt * (t / 2)
-    plt.plot(t, fidelityA, label = r'$F_A$', markersize=2, color = 'b')
-    plt.plot(t, fidelityB, label = r'$F_B$', markersize=2, color = 'r')
+    plt.plot(t, PA, label = r'$P_A$', markersize=2, color = 'b')
+    plt.plot(t, PB, label = r'$P_B$', markersize=2, color = 'r')
     plt.xlabel(r'$\tau$')
-    plt.ylabel(r'Fidelity')
-    plt.ylim(0.5,1)
+    plt.ylabel(r'$P_{up}$')
+    #plt.ylim(0.5,1)
     plt.legend()
     plt.show()
 
@@ -165,10 +184,41 @@ def main_entangled():
     plt.legend()
     plt.show()
 
+def test():
+    timesteps = 2500
+    dt = 0.01
+    state = State(plus, timesteps)
+    L = [PauliP, PauliM, PauliZ]
+    k_p, k_m, k_z = 0.1, 0.1, 0.01
+    k = [k_p, k_m, k_z] 
+    
+    omega_0  = 1
+    omega_rf = 1
+    h = 0.1
+    H = lambda t : - omega_0 * S_z - h * np.cos(omega_rf * t) * S_x
+    state.dm = solve_lindblad(H, state.dm[0], L, k, timesteps, dt, tdep = True)
+
+    P_up = state.P(up * up.H)
+    fidelity = state.fidelity(state.dm[0])
+    S_x_measured = state.calc_observable(S_x)
+    purity = state.purity()
+
+    t = np.linspace(0, timesteps * dt, timesteps)
+    plt.plot(t, P_up, label = r'$P_{up}$', markersize=2)
+    plt.plot(t, fidelity, label = r'$F$', markersize=2)
+    plt.plot(t, S_x_measured, label = r'$\langle S_{x1}(t) \rangle$', markersize=2)
+    plt.plot(t, purity, label = r'Tr$(\rho^2)$', markersize=2)
+    plt.xlabel(r'Time $t$')
+    plt.legend()
+    plt.show()
+
+
 if __name__ == "__main__":
     if(sys.argv[1] == "spin_1/2"):
         main()
     if(sys.argv[1] == "spin_echo"):
-        test()
+        echo()
     if(sys.argv[1] == "two_spins"):
         main_entangled()
+    if(sys.argv[1] == "test"):
+        test()
