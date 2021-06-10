@@ -212,6 +212,44 @@ def test():
     plt.legend()
     plt.show()
 
+def maindeph():
+    timesteps = 2500
+    dt = 0.01
+    state = State(plus, timesteps)
+    L = [PauliP, PauliM, PauliZ]
+    k_p, k_m, k_z = 0.1, 0.1, 0.1
+    k = [k_p, k_m, k_z] 
+
+    state.dm = solve_lindblad(H, state.dm[0], L, k, timesteps, dt)
+
+    S_x_measured = state.calc_observable(S_x)
+    P_up = state.P(up)
+    fidelity = state.fidelity(state.dm[0])
+    rho00 = np.real(state.dm[:, 0, 0])
+    t = np.linspace(0, timesteps * dt, timesteps)
+    plt.plot(t, S_x_measured, label = r'$\frac{1}{2}(\rho_{01}+\rho_{10})$')
+    plt.plot(t, rho00, label = r'$\rho_{00}$')
+    plt.plot(t, fidelity, label = r'Fidelity')
+    plt.xlabel(r'Time $t$')
+    plt.legend()
+    plt.show()
+
+    rho00 = np.real(state.dm[:, 0, 0])
+    rho11 = np.real(state.dm[:, 1, 1])
+    f = lambda x, a, b, c: c*np.exp(-x/a)*np.cos(x*b)
+    fS_x = fit(t, S_x_measured, f)
+
+    print('T2 =',fS_x[0],'omega_0=',fS_x[1],'simga_0=',fS_x[2])
+
+
+    plt.plot(t, f(t, *fS_x), 'r-',
+             label='$fit: T2=%5.3f, \omega_0=%5.3f, \sigma_0=%5.3f$' % tuple(fS_x))
+    plt.plot(t, S_x_measured, label = r'$\frac{1}{2}(\rho_{01}+\rho_{10})$')
+    plt.xlabel(r'Time $t$')
+    plt.title(r'$\frac{1}{2}(\rho_{01}+\rho_{10})$ fitted to a curve of the form: $\frac{1}{2}(\rho_{01}+\rho_{10})=\sigma_0*exp(-t/T2)*cos(t*\omega_0)$')
+    plt.legend()
+    plt.show()
+
 
 if __name__ == "__main__":
     if(sys.argv[1] == "spin_1/2"):
