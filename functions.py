@@ -23,9 +23,25 @@ def fit(xdata, ydata, f):
     return popt
 
 def commutator(x, y):
+    ''' Calculates the commutator of matrices x and y
+    input:
+    x : np.ndarray
+    y : np.ndarray
+    
+    output:
+    commutator between x and y : np.ndarray
+    '''
     return x * y - y * x
 
 def anti_commutator(x, y):
+    ''' Calculates the anti commutator of matrices x and y
+    input:
+    x : np.ndarray
+    y : np.ndarray
+    
+    output:
+    anti-commutator between x and y : np.ndarray
+    '''
     return x * y + y * x
 
 def rotate(rho, angle, axis):
@@ -41,7 +57,22 @@ def coherent_state(alpha, N):
     return X
 
 def solve_lindblad(H, rho0, L, gamma, timesteps, dt, pulse_sequence = None, tdep = False):
-
+    '''Solving the Lindblad equation evolving in time
+    
+    inputs:
+    H (Hamiltonian) : np.ndarray
+    rho0 (initial density matrix) : np.ndarray
+    L (operator matrix) : np.ndarray
+    gamma (measurements rate) : float
+    timesteps (number of timesteps) : int
+    dt : float
+    pulse_sequence : list of lists (form: [[time of pulse, pulse = [rotation angle, rotation axis]])
+    tdep : bool (True is Hamiltionia is time dependent)
+    
+    output:
+    rho (density matrix) : np.ndarray
+    
+    '''
     N = rho0.shape[0]
     rho = np.ndarray(shape = (timesteps, N, N), dtype = np.complex)
     rho[0] = rho0
