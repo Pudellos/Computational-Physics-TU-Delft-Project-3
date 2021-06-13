@@ -24,7 +24,7 @@ The code has also been restructured. We made a State class, which contains all t
 The next phenomenon we simulated is the Ramsey experiment, the exact details are quite technical but the idea is that we rotate a particle (in the up or down state) with a short pulse of $`\pi/2`$ and the again with a pulse of $`-\pi/2`$. If we then look at the decay times and oscillation frequencies of $`P_{down}`$, $`\rho_{00}`$ and $`\frac{1}{2}(\rho_{01}+\rho_{10})`$ we can find T1 and T2 of the system. This is almost exaclty what happens in an NMR. To simulate this the Lindblad equation was solved for each timestep (250 times) which took 122.46 s, the data was then fitted to curves which we found in the slides of the course REFERENCE NEEDED. The values we find are (on average): $`\omega_0=1`$,  $`T_2=20.74`$,  $`T_1=10`$ and  $`a_{\beta}=1`$.
 
 
-![alt text](Figures/ramsey.svg "Title Text")
+![alt text](Figures/ramsey.jpg "Title Text")
 ![alt text](Figures/Pdown.svg "Title Text")
 ![alt text](Figures/mixed.svg "Title Text")
 ![alt text](Figures/updown.svg "Title Text")
