@@ -25,6 +25,14 @@ minus = (1 / np.sqrt(2)) * (up - down)
 ## Pauli/Jump operators ##
 I = np.matrix([[1, 0],
                [0, 1]]) 
+PauliX = np.matrix([[0, 1],
+                     [1, 0]])
+PauliY = np.matrix([[0 ,-1j],
+                     [1j, 0]])
+PauliZ = np.matrix([[1, 0],
+                     [0,-1]])
+PauliP = np.matrix([[0, 0],
+                     [1, 0]])
 PauliM = np.matrix([[0, 1],
                      [0, 0]])
 S_x, S_y, S_z = 1/2 * PauliX, 1/2 * PauliY, 1/2 * PauliZ ## Angular mmtm operators
@@ -46,7 +54,7 @@ H = - 1 * S_z
 t = np.arange(10, timesteps, 20)
 PB = np.zeros(len(t))
 L = [PauliM, PauliPhi]
-k = [0.1, 0.01]
+k = [0.1, 0.1]
 for i, N in enumerate(t):
     print("N = %s" %N, end = '\r' )
     tau = np.floor(N/2) - 1
