@@ -147,14 +147,90 @@ def echo():
 
         stateB = State(up, N)
         stateB.dm = solve_lindblad(H, stateB.dm[0], L, k, N, dt, pulse_sequence = seq)
+
         PA[i] = stateA.P(up)[-1]
         PB[i] = stateB.P(up)[-1]
-        
+
     tau = dt * (t / 2)
     plt.plot(t, PA, label = r'$P_A$', markersize=2, color = 'b')
     plt.plot(t, PB, label = r'$P_B$', markersize=2, color = 'r')
     plt.xlabel(r'$\tau$')
     plt.ylabel(r'$P_{up}$')
+    #plt.ylim(0.5,1)
+    plt.legend()
+    plt.show()
+
+def echo_test():   
+    phi = 0.5
+    PauliPhi = np.matrix([[1, 0],
+                          [0, np.exp(-1j * phi)]], dtype = np.complex)
+
+    timesteps = 1000
+    dt = 0.005
+    L = [PauliP, PauliM, PauliZ]
+    k_p, k_m, k_z = 0.1, 0.1, 0.01
+    k = [k_p, k_m, k_z] 
+    
+    H = - 1 * S_z
+
+    L = [PauliM, PauliPhi]
+    k = [0.5, 0.1]
+    ts = np.arange(10, 10000, 100)
+    PA = np.zeros(len(ts))
+    PB = np.zeros(len(ts))
+    PC = np.zeros(len(ts))
+    PD = np.zeros(len(ts))
+
+    for i, t in enumerate(ts):
+        print("i = %s" %i, end = '\r' )
+        tau = np.floor(t/8) - 1
+
+        seq = [[0    , [np.pi/2, x_axis]], 
+               [tau, [np.pi  , x_axis]],
+               [2*tau, [np.pi/2, x_axis]]]
+
+        seq1 = [[0    , [np.pi/2, x_axis]], 
+                [tau  , [np.pi  , x_axis]],
+                [2*tau, [np.pi  , x_axis]],
+                [3*tau, [np.pi  , x_axis]],
+                [4*tau, [np.pi/2, x_axis]]]
+
+        seq2 = [[0    , [np.pi/2, x_axis]], 
+                [tau  , [np.pi  , x_axis]],
+                [2*tau, [np.pi  , x_axis]],
+                [3*tau, [np.pi  , x_axis]],
+                [4*tau  , [np.pi  , x_axis]],
+                [5*tau, [np.pi  , x_axis]],
+                [6*tau, [np.pi  , x_axis]],
+                [7*tau, [np.pi  , x_axis]],
+                [8*tau, [np.pi/2, x_axis]]]
+
+        stateA = State(up, t)
+        stateA.dm = solve_lindblad(H, stateA.dm[0], L, k, t, dt)
+
+        stateB = State(up, t)
+        stateB.dm = solve_lindblad(H, stateB.dm[0], L, k, t, dt, pulse_sequence = seq)
+
+        stateC = State(up, t)
+        stateC.dm = solve_lindblad(H, stateC.dm[0], L, k, t, dt, pulse_sequence = seq1)
+
+        stateD = State(up, t)
+        stateD.dm = solve_lindblad(H, stateD.dm[0], L, k, t, dt, pulse_sequence = seq2)
+
+        PA[i] = stateA.P(up)[-1]
+        PB[i] = stateB.P(up)[-1]
+        PC[i] = stateC.P(up)[-1]   
+        PD[i] = stateC.P(up)[-1]   
+
+
+    tau = dt * ts
+    plt.plot(ts, PA, label = r'$P_A$', markersize=2, color = 'b')
+    plt.plot(ts, PB, label = r'$P_B$', markersize=2, color = 'r')
+    plt.plot(ts, PC, label = r'$P_C$', markersize=2, color = 'g')
+    plt.plot(ts, PD, label = r'$P_D$', markersize=2, color = 'k')
+    plt.xlabel(r'$t$')
+    plt.ylabel(r'$P_{up}$')
+    plt.xscale('log')
     #plt.ylim(0.5,1)
     plt.legend()
     plt.show()
@@ -256,7 +332,10 @@ if __name__ == "__main__":
         main()
     if(sys.argv[1] == "spin_echo"):
         echo()
+    if(sys.argv[1] == "spin_echo_test"):
+        echo_test()
     if(sys.argv[1] == "two_spins"):
         main_entangled()
     if(sys.argv[1] == "test"):
         test()
+

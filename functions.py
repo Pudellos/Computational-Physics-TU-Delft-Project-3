@@ -87,6 +87,7 @@ def solve_lindblad(H, rho0, L, gamma, timesteps, dt, pulse_sequence = None, tdep
 
         if(pulse_sequence != None):
             taus = [pulse_sequence[i][0] for i in range(len(pulse_sequence)) ]
+            #print(rho[0])
             if( 0 in taus):
                 #print("t = ", 0)
                 for time, pulse in pulse_sequence:
